@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Number Sorter & Excel Exporter</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      margin: 50px;
+      text-align: center;
+    }
+    textarea {
+      width: 80%;
+      height: 150px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      resize: none;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 25px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    h1 {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Number Sorter & Excel Exporter</h1>
+  <p>Enter your numbers (comma or space separated):</p>
+
+  <textarea id="numberInput" placeholder="Example: 10, 4, 25, 1, 7"></textarea><br>
+  <button onclick="convertToExcel()">Convert to Excel</button>
+
+  <script>
+    function convertToExcel() {
+      let input = document.getElementById('numberInput').value.trim();
+      if (!input) {
+        alert("Please enter some numbers!");
+        return;
+      }
+
+      // Split input by commas, spaces, or newlines
+      let numbers = input.split(/[\s,]+/)
+                         .map(Number)
+                         .filter(n => !isNaN(n));
+
+      if (numbers.length === 0) {
+        alert("No valid numbers found!");
+        return;
+      }
+
+      // Sort ascending
+      numbers.sort((a, b) => a - b);
+
+      // Create worksheet
+      let ws_data = numbers.map(num => [num]); // each number in its own row
+      let ws = XLSX.utils.aoa_to_sheet(ws_data);
+      let wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sorted Numbers");
+
+      // Export to Excel
+      XLSX.writeFile(wb, "Sorted_Numbers.xlsx");
+    }
+  </script>
+
+</body>
+</html>

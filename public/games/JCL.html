@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JCL Scoreboard (Full)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .scoreboard-panel, .control-panel {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+        }
+
+        .scoreboard-panel {
+            flex: 1;
+            min-width: 320px;
+            text-align: center;
+        }
+        
+        .control-panel {
+            flex: 1.5;
+            min-width: 340px;
+            text-align: center;
+        }
+
+        .scoreboard-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.5em;
+            color: #007bff;
+        }
+
+        .scoreboard-panel .status {
+            font-size: 0.9em;
+            font-weight: 700;
+            color: #e67e22;
+            background-color: #fdf3e8;
+            border-radius: 20px;
+            padding: 5px 10px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .scoreboard-panel .status.bowling {
+            color: #555;
+            background-color: #eee;
+        }
+
+        .scoreboard-panel .score-display {
+            font-size: 3.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .scoreboard-panel .overs-display {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 15px;
+        }
+        
+        .scoreboard-panel .target-display {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #d9534f;
+            min-height: 20px; /* Reserve space */
+        }
+        
+        /* --- New Overs Breakdown --- */
+        .overs-breakdown {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            text-align: left;
+        }
+        
+        .overs-breakdown h4 {
+            text-align: center;
+            margin-top: 0;
+            color: #333;
+            font-size: 1.1em;
+        }
+        
+        .over-log-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 0;
+            font-size: 0.95em;
+        }
+        
+        .over-log-row strong {
+            color: #007bff;
+            min-width: 60px;
+        }
+        
+        .ball-log-small {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85em;
+            color: #333;
+        }
+        
+        .ball-log-small.run { background-color: #e0e0e0; }
+        .ball-log-small.run-4 { background-color: #a0cffc; }
+        .ball-log-small.run-6 { background-color: #8fdf8f; }
+        .ball-log-small.extra { background-color: #f0ad4e; color: white; }
+        .ball-log-small.wicket { background-color: #d9534f; color: white; }
+        /* ------------------------- */
+
+
+        .control-panel h3 {
+            margin-top: 0;
+            color: #444;
+        }
+
+        .match-status-box {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .match-status-box .label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        #match-status {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        #over-type-val {
+            font-weight: 700;
+        }
+        .powerplay { color: #f0ad4e; }
+        .death-over { color: #d9534f; }
+        .normal { color: #555; }
+
+        .this-over-log {
+            margin-bottom: 20px;
+        }
+
+        .over-log-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            min-height: 40px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+        }
+        
+        .ball-log-large {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9em;
+            color: #333;
+        }
+        
+        .ball-log-large.run { background-color: #d0d0d0; }
+        .ball-log-large.run-4 { background-color: #a0cffc; }
+        .ball-log-large.run-6 { background-color: #8fdf8f; }
+        .ball-log-large.extra { background-color: #f0ad4e; color: white; }
+        .ball-log-large.wicket { background-color: #d9534f; color: white; }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .button-grid button {
+            padding: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .btn-run { background-color: #e0e0e0; }
+        .btn-run-4 { background-color: #a0cffc; }
+        .btn-run-6 { background-color: #8fdf8f; }
+        .btn-extra { background-color: #f0ad4e; color: white; }
+        .btn-wicket { background-color: #d9534f; color: white; }
+
+        .system-controls button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        #btn-start { background-color: #28a745; color: white; }
+        #btn-change-innings { background-color: #17a2b8; color: white; display: none; }
+        #btn-reset { background-color: #6c757d; color: white; margin-top: 10px; }
+        
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Jain Cricket League</h1>
+    </header>
+
+    <div class="container">
+
+        <div class="scoreboard-panel">
+            <h3 id="t1-name">Team 1</h3>
+            <p id="t1-status" class="status bowling">Bowling</p>
+            <div id="t1-score" class="score-display">0-0</div>
+            <div class="overs-display">
+                Overs: <span id="t1-overs">0.0</span> / 5
+            </div>
+            
+            <div class="overs-breakdown">
+                <h4>Scorecard</h4>
+                <div id="t1-overs-log">
+                    </div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="match-status-box">
+                <div class="label">Match Status</div>
+                <div id="match-status">Press "Start Match"</div>
+                <div class="label" style="margin-top: 10px;">Over Status</div>
+                <div id="over-type-val" class="normal">--</div>
+            </div>
+
+            <div class="this-over-log">
+                <h3>This Over</h3>
+                <div id="this-over-log" class="over-log-display">
+                    </div>
+            </div>
+
+            <h3>Scoring Controls</h3>
+            <div class="button-grid" id="scoring-buttons" style="display: none;">
+                <button class="btn-run" onclick="recordBall(0)">0</button>
+                <button class="btn-run" onclick="recordBall(1)">1</button>
+                <button class="btn-run" onclick="recordBall(2)">2</button>
+                <button class="btn-run" onclick="recordBall(3)">3</button>
+                <button class="btn-run btn-run-4" onclick="recordBall(4)">4</button>
+                <button class="btn-run btn-run-6" onclick="recordBall(6)">6</button>
+                <button class="btn-extra" onclick="recordExtra('wd')">Wide</button>
+                <button class="btn-extra" onclick="recordExtra('nb')">No Ball</button>
+                <button class="btn-wicket" onclick="recordWicket()">Wicket</button>
+            </div>
+            
+            <div class="system-controls">
+                <button id="btn-start" onclick="startMatch()">Start Match</button>
+                <button id="btn-change-innings" onclick="changeInnings()">Start 2nd Innings</button>
+                <button id="btn-reset" onclick="startMatch()">Reset Match</button>
+            </div>
+        </div>
+
+        <div class="scoreboard-panel">
+            <h3 id="t2-name">Team 2</h3>
+            <p id="t2-status" class="status bowling">Bowling</p>
+            <div id="t2-score" class="score-display">0-0</div>
+            <div class="overs-display">
+                Overs: <span id="t2-overs">0.0</span> / 5
+            </div>
+            <div class="target-display">
+                Target: <span id="t2-target">--</span>
+            </div>
+            
+            <div class="overs-breakdown">
+                <h4>Scorecard</h4>
+                <div id="t2-overs-log">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Game State ---
+        let team1 = { name: "Team 1", score: 0, wickets: 0, overs: 0, balls: 0, oversLog: [] };
+        let team2 = { name: "Team 2", score: 0, wickets: 0, overs: 0, balls: 0, oversLog: [] };
+        
+        let battingTeam, bowlingTeam;
+        let currentInning = 1;
+        let target = 0;
+        let matchOver = true;
+        
+        const MAX_OVERS = 5;
+        const MAX_WICKETS = 10;
+
+        // --- DOM Elements ---
+        const t1_nameEl = document.getElementById('t1-name');
+        const t1_statusEl = document.getElementById('t1-status');
+        const t1_scoreEl = document.getElementById('t1-score');
+        const t1_oversEl = document.getElementById('t1-overs');
+        const t1_oversLogEl = document.getElementById('t1-overs-log');
+        
+        const t2_nameEl = document.getElementById('t2-name');
+        const t2_statusEl = document.getElementById('t2-status');
+        const t2_scoreEl = document.getElementById('t2-score');
+        const t2_oversEl = document.getElementById('t2-overs');
+        const t2_targetEl = document.getElementById('t2-target');
+        const t2_oversLogEl = document.getElementById('t2-overs-log');
+
+        const statusEl = document.getElementById('match-status');
+        const overTypeEl = document.getElementById('over-type-val');
+        const thisOverLogEl = document.getElementById('this-over-log');
+        
+        const scoringButtonsEl = document.getElementById('scoring-buttons');
+        const startBtn = document.getElementById('btn-start');
+        const changeInningsBtn = document.getElementById('btn-change-innings');
+
+        // --- Core Functions ---
+        function startMatch() {
+            let name1 = prompt("Enter name for Team 1:", "Team 1") || "Team 1";
+            let name2 = prompt("Enter name for Team 2:", "Team 2") || "Team 2";
+            
+            // Reset objects
+            team1 = { name: name1, score: 0, wickets: 0, overs: 0, balls: 0, oversLog: [] };
+            team2 = { name: name2, score: 0, wickets: 0, overs: 0, balls: 0, oversLog: [] };
+            
+            currentInning = 1;
+            battingTeam = team1;
+            bowlingTeam = team2;
+            
+            target = 0;
+            matchOver = false;
+
+            scoringButtonsEl.style.display = 'grid';
+            startBtn.style.display = 'none';
+            changeInningsBtn.style.display = 'none';
+            
+            updateDisplay();
+        }
+
+        // --- Scoring Functions ---
+        
+        function recordBall(runs) {
+            if (matchOver) return;
+            
+            battingTeam.score += runs;
+            let log = { text: runs.toString(), class: 'run' };
+            if (runs === 4) log.class = 'run-4';
+            if (runs === 6) log.class = 'run-6';
+            
+            pushToLog(log);
+            addBall();
+        }
+
+        function recordExtra(type) {
+            if (matchOver) return;
+            
+            battingTeam.score++;
+            let log = { text: 'Wd', class: 'extra' };
+            
+            if (type === 'nb') {
+                let runsOffNoBall = parseInt(prompt("Enter runs off the No Ball (0, 1, 2, 3, 4, 6):", "0"), 10);
+                if (!isNaN(runsOffNoBall) && runsOffNoBall >= 0) {
+                    battingTeam.score += runsOffNoBall;
+                    log.text = runsOffNoBall > 0 ? `Nb+${runsOffNoBall}` : 'Nb';
+                } else {
+                    log.text = 'Nb';
+                }
+            }
+            
+            pushToLog(log);
+            updateDisplay(); // No ball added, just update score and log
+        }
+
+        function recordWicket() {
+            if (matchOver) return;
+            
+            battingTeam.wickets++;
+            pushToLog({ text: 'W', class: 'wicket' });
+            
+            if (battingTeam.wickets < MAX_WICKETS) {
+                addBall(); // Wicket counts as a ball
+            } else {
+                updateDisplay(); // Show the 'W' on the log
+                endInnings();
+            }
+        }
+        
+        // --- Helper Logic Functions ---
+        
+        function pushToLog(logObject) {
+            // Ensure the array for the current over exists
+            if (!battingTeam.oversLog[battingTeam.overs]) {
+                battingTeam.oversLog[battingTeam.overs] = [];
+            }
+            battingTeam.oversLog[battingTeam.overs].push(logObject);
+        }
+        
+        function addBall() {
+            // This function is ONLY called for a legal delivery
+            battingTeam.balls++;
+            
+            if (battingTeam.balls === 6) {
+                battingTeam.overs++;
+                battingTeam.balls = 0;
+            }
+            
+            if (battingTeam.overs === MAX_OVERS) {
+                updateDisplay(); // Show the final ball
+                endInnings();
+            } else {
+                updateDisplay();
+            }
+        }
+
+        function endInnings() {
+            matchOver = true;
+            if (currentInning === 1) {
+                target = battingTeam.score + 1;
+                statusEl.innerText = `Innings Break! ${team2.name} needs ${target} runs.`;
+                changeInningsBtn.style.display = 'block';
+                scoringButtonsEl.style.display = 'none';
+            } else {
+                checkWinCondition(true);
+            }
+            updateDisplay();
+        }
+
+        function changeInnings() {
+            currentInning = 2;
+            matchOver = false;
+            
+            battingTeam = team2;
+            bowlingTeam = team1;
+
+            changeInningsBtn.style.display = 'none';
+            scoringButtonsEl.style.display = 'grid';
+            
+            updateDisplay();
+        }
+
+        // --- Main Display Function ---
+        
+        function updateDisplay() {
+            // Team 1 Panel
+            t1_nameEl.innerText = team1.name;
+            t1_scoreEl.innerText = `${team1.score}-${team1.wickets}`;
+            t1_oversEl.innerText = `${team1.overs}.${team1.balls}`;
+            t1_statusEl.className = (battingTeam === team1) ? 'status' : 'status bowling';
+            t1_statusEl.innerText = (battingTeam === team1) ? 'Batting' : 'Bowling';
+
+            // Team 2 Panel
+            t2_nameEl.innerText = team2.name;
+            t2_scoreEl.innerText = `${team2.score}-${team2.wickets}`;
+            t2_oversEl.innerText = `${team2.overs}.${team2.balls}`;
+            t2_targetEl.innerText = (currentInning === 2) ? target : "--";
+            t2_statusEl.className = (battingTeam === team2) ? 'status' : 'status bowling';
+            t2_statusEl.innerText = (battingTeam === team2) ? 'Batting' : 'Bowling';
+            
+            // Middle Panel - Match Status
+            if (!matchOver) {
+                statusEl.innerText = `Inning ${currentInning}: ${battingTeam.name} Batting`;
+            }
+            
+            // Middle Panel - Over Type
+            let currentOverNum = battingTeam.overs + 1;
+            if (matchOver) {
+                overTypeEl.innerText = "--";
+                overTypeEl.className = "normal";
+            } else if (currentOverNum === 1) {
+                overTypeEl.innerText = "Powerplay";
+                overTypeEl.className = "powerplay";
+            } else if (currentOverNum === MAX_OVERS) {
+                overTypeEl.innerText = "Death Over";
+                overTypeEl.className = "death-over";
+            } else {
+                overTypeEl.innerText = "Normal";
+                overTypeEl.className = "normal";
+            }
+
+            // Middle Panel - This Over Log
+            renderThisOverLog();
+
+            // Side Panels - Full Scorecard
+            renderFullScorecard(team1, t1_oversLogEl);
+            renderFullScorecard(team2, t2_oversLogEl);
+
+            // Check for win in 2nd inning
+            if (currentInning === 2 && !matchOver) {
+                checkWinCondition(false);
+            }
+        }
+        
+        function renderThisOverLog() {
+            thisOverLogEl.innerHTML = '';
+            const currentOverLog = battingTeam.oversLog[battingTeam.overs] || [];
+            
+            if (currentOverLog.length === 0 && !matchOver) {
+                thisOverLogEl.innerHTML = '<span style="color: #888;">Waiting for first ball...</span>';
+            } else {
+                currentOverLog.forEach(ball => {
+                    const ballEl = document.createElement('div');
+                    ballEl.className = `ball-log-large ${ball.class}`;
+                    ballEl.innerText = ball.text;
+                    thisOverLogEl.appendChild(ballEl);
+                });
+            }
+        }
+        
+        function renderFullScorecard(team, element) {
+            element.innerHTML = '';
+            team.oversLog.forEach((over, index) => {
+                const overRow = document.createElement('div');
+                overRow.className = 'over-log-row';
+                
+                let overHtml = `<strong>Over ${index + 1}:</strong>`;
+                over.forEach(ball => {
+                    overHtml += `<span class="ball-log-small ${ball.class}">${ball.text}</span>`;
+                });
+                
+                overRow.innerHTML = overHtml;
+                element.appendChild(overRow);
+            });
+        }
+        
+        function checkWinCondition(inningsJustEnded) {
+            if (battingTeam.score >= target) {
+                // Batting team (Team 2) wins
+                statusEl.innerText = `${battingTeam.name} wins by ${MAX_WICKETS - battingTeam.wickets} wickets!`;
+                matchOver = true;
+                scoringButtonsEl.style.display = 'none';
+            } else if (inningsJustEnded) {
+                // Innings ended, but target not reached
+                if (battingTeam.score === target - 1) {
+                    statusEl.innerText = "Match Tied!";
+                } else {
+                    // Bowling team (Team 1) wins
+                    statusEl.innerText = `${bowlingTeam.name} wins by ${target - 1 - battingTeam.score} runs!`;
+                }
+                matchOver = true;
+                scoringButtonsEl.style.display = 'none';
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Event Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="event.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+
+    <style>
+        /* Add cursor pointer to candidate rows */
+        #allCandidatesBody tr {
+            cursor: pointer;
+        }
+        #allCandidatesBody tr:hover {
+            background-color: #e9ecef; /* Optional: highlight on hover */
+        }
+        /* Smaller font size for admin username in activity feed */
+        .activity-admin {
+            font-size: 0.8em;
+            color: var(--bs-text-muted);
+            margin-left: 5px;
+        }
+        /* Style for event list items */
+        #eventList .list-group-item {
+            cursor: pointer;
+        }
+         #eventList .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        /* Style for paper marking table */
+        #paperMarkingBody .btn-danger {
+            --bs-btn-padding-y: .1rem;
+            --bs-btn-padding-x: .4rem;
+            --bs-btn-font-size: .8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="offcanvas offcanvas-start bg-white text-dark shadow-lg" data-bs-scroll="true" tabindex="-1" id="sidebar">
+        <div class="offcanvas-header border-bottom">
+            <a class="navbar-brand text-dark d-flex align-items-center" href="#">
+                <img src="event.ico" alt="Event Logo" class="me-2 header-brand-icon" style="width:27px; height:27px; vertical-align:middle;">
+                <span class="header-brand-text">Event Dashboard</span>
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+            <ul class="nav nav-pills flex-column mb-auto" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation"><button class="nav-link text-start active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab"><i class="bi bi-grid-1x2-fill me-2"></i>Dashboard</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link text-start" id="create-candidate-tab" data-bs-toggle="tab" data-bs-target="#create-candidate" type="button" role="tab"><i class="bi bi-person-plus-fill me-2"></i>Create Candidate</button></li>
+                
+                <li class="nav-item d-none" role="presentation"><button class="nav-link text-start" id="view-candidate-tab" data-bs-toggle="tab" data-bs-target="#view-candidate" type="button" role="tab"><i class="bi bi-person-lines-fill me-2"></i>View Candidate</button></li>
+                
+                <li class="nav-item" role="presentation"><button class="nav-link text-start" id="all-candidates-tab" data-bs-toggle="tab" data-bs-target="#all-candidates" type="button" role="tab"><i class="bi bi-people-fill me-2"></i>All Students</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link text-start" id="event-points-tab" data-bs-toggle="tab" data-bs-target="#event-points" type="button" role="tab"><i class="bi bi-award-fill me-2"></i>Event Points</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link text-start" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance" type="button" role="tab"><i class="bi bi-check-all me-2"></i>Attendance</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link text-start" id="event-search-tab" data-bs-toggle="tab" data-bs-target="#event-search" type="button" role="tab"><i class="bi bi-calendar-event-fill me-2"></i>Event Search</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link text-start" id="paper-marking-tab" data-bs-toggle="tab" data-bs-target="#paper-marking" type="button" role="tab"><i class="bi bi-pencil-square me-2"></i>Paper Marking</button></li>
+                
+                <hr>
+                <li class="nav-item"><a href="/api/backup/excel" class="nav-link text-start text-success"><i class="bi bi-cloud-download-fill me-2"></i>Download Backup</a></li>
+            <hr></ul>
+            
+            <div class="mt-auto">
+                 <p class="text-muted small mb-1">Logged in as:</p>
+                 <p class="fw-bold" id="loggedInUsername">Loading...</p>
+                 <button class="btn btn-outline-danger w-100" id="logoutButton">
+                     <i class="bi bi-box-arrow-right me-2"></i>Logout
+                 </button>
+            </div>
+        </div>
+    </div>
+
+    <header id="main-header" class="navbar navbar-light bg-white sticky-top shadow-sm border-bottom">
+        <div class="container-fluid d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center header-left">
+            <button
+              class="btn header-menu-btn d-flex align-items-center justify-content-center me-3"
+              type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Toggle sidebar">
+              <i class="bi bi-list fs-3"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center mb-0" href="#">
+              <img src="event.ico" alt="Event Logo" class="me-2 header-brand-icon" style="width:27px; height:27px; vertical-align:middle;">
+              <span class="header-brand-text">Event Dashboard</span>
+            </a>
+          </div>
+          <div class="d-flex align-items-center header-right"></div>
+        </div>
+      </header>
+
+
+    <main class="container pb-4">
+        <div class="tab-content" id="myTabContent">
+
+            <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+                <h3 class="mb-3 pt-4">Dashboard</h3>
+                 <div class="alert-placeholder"></div>
+                <div class="row" id="stat-cards">
+                    <div class="col-lg-4 mb-3"><div class="card stat-card shadow-sm border-0 text-white bg-primary"><div class="card-body"><h5 class="card-title"><i class="bi bi-people-fill me-2"></i>Total Candidates</h5><p class="card-text fs-2" id="stat-total-candidates">0</p></div></div></div>
+                    <div class="col-lg-4 mb-3"><div class="card stat-card shadow-sm border-0 text-white bg-success"><div class="card-body"><h5 class="card-title"><i class="bi bi-star-fill me-2"></i>Total Points Awarded</h5><p class="card-text fs-2" id="stat-total-points">0</p></div></div></div>
+                    <div class="col-lg-4 mb-3">
+                         <div class="card stat-card shadow-sm border-0 text-white bg-info">
+                             <div class="card-body">
+                                 <h5 class="card-title"><i class="bi bi-calendar-check-fill me-2"></i>Today's Attendance Marks</h5>
+                                 <p class="card-text fs-2" id="stat-today-attendance">0</p>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-8 mb-3"><div class="card shadow-sm border-0"><div class="card-body"><h5 class="card-title">Points Awarded (Last 7 Days)</h5><canvas id="pointsBarChart"></canvas></div></div></div>
+                    <div class="col-lg-4 mb-3">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h5 class="card-title">Top 3 Users</h5>
+                                <div class="d-flex justify-content-center mb-2">
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Top Users Gender Filter">
+                                      <button type="button" class="btn btn-outline-primary active" data-top-gender-filter="all">ALL</button>
+                                      <button type="button" class="btn btn-outline-primary" data-top-gender-filter="Male">M</button>
+                                      <button type="button" class="btn btn-outline-primary" data-top-gender-filter="Female">F</button>
+                                    </div>
+                                </div>
+                                <ul class="list-group list-group-flush" id="top-users-list"></ul>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h5 class="card-title">Recent Activity</h5>
+                                <ul class="list-group list-group-flush" id="activity-feed"></ul>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="create-candidate" role="tabpanel">
+                <h3 class="mb-3 pt-4">Register a New Candidate</h3>
+                <div class="alert-placeholder"></div>
+                <div class="card shadow-sm border-0"><div class="card-body">
+                <form id="createCandidateForm">
+                    <div class="mb-3"><label for="name" class="form-label">Full Name</label><input type="text" class="form-control" id="name" required></div>
+                    <div class="mb-3"><label for="age" class="form-label">Age (4+)</label><input type="number" class="form-control" id="age" min="4" required></div>
+                    <div class="mb-3"><label for="phone" class="form-label">Phone Number (10 digits)</label><input type="tel" class="form-control" id="phone" pattern="\d{10}" title="Phone number must be exactly 10 digits" required></div>
+                    <div class="mb-3">
+                        <label class="form-label d-block">Gender</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="gender" id="genderMale" value="Male" checked>
+                            <label class="form-check-label" for="genderMale">Male</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="gender" id="genderFemale" value="Female">
+                            <label class="form-check-label" for="genderFemale">Female</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>Create Candidate</button>
+                </form></div></div>
+            </div>
+
+            <div class="tab-pane fade" id="view-candidate" role="tabpanel">
+                <h3 class="mb-3 pt-4">Find a Candidate</h3>
+                <div class="alert-placeholder"></div>
+                <form id="viewCandidateForm" class="d-flex mb-3"><input class="form-control me-2" type="search" id="searchTerm" placeholder="Enter UID or Name" required><button class="btn btn-success" type="submit"><i class="bi bi-search me-2"></i>Search</button></form>
+                <div id="candidateDetails" class="mt-4"></div>
+            </div>
+
+             <div class="tab-pane fade" id="all-candidates" role="tabpanel">
+                <h3 class="mb-3 pt-4">All Students</h3>
+                <div class="alert-placeholder"></div>
+                <div class="card shadow-sm border-0 mb-3 filter-card">
+                    <div class="card-body">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3"><label for="filterGender" class="form-label">Gender</label><select id="filterGender" class="form-select"><option value="all">All Genders</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
+                            
+                            <div class="col-md-3">
+                                <label for="filterAttendance" class="form-label">Attendance</label>
+                                <select id="filterAttendance" class="form-select">
+                                    <option value="all">All Students</option>
+                                    <optgroup label="Attended (At Least)">
+                                        <option value="day1">Attended Day 1</option>
+                                        <option value="day2">Attended Day 2</option>
+                                        <option value="day3">Attended Day 3</option>
+                                        <option value="day4">Attended Day 4</option>
+                                        <option value="day5">Attended Day 5</option>
+                                    </optgroup>
+                                    <optgroup label="Attended (Exactly)">
+                                        <option value="only_1_day">Attended only 1 day</option>
+                                        <option value="only_2_days">Attended only 2 days</option>
+                                        <option value="only_3_days">Attended only 3 days</option>
+                                        <option value="only_4_days">Attended only 4 days</option>
+                                    </optgroup>
+                                    <optgroup label="Attended (All)">
+                                        <option value="all_days_5">Attended All 5 Days</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="col-md-2"><label for="filterSort" class="form-label">Sort By</label><select id="filterSort" class="form-select"><option value="uid">UID</option><option value="name">Name</option><option value="total_points">Total Points</option><option value="today_points">Today's Points</option></select></div>
+                            <div class="col-md-3"><label for="filterSearch" class="form-label">Search Name/UID/Phone</label><input type="text" id="filterSearch" class="form-control" placeholder="Type to search..."></div>
+                            <div class="col-md-1 d-grid">
+                                <button class="btn btn-outline-danger" id="downloadPdfBtn" title="Download PDF">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card shadow-sm border-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" style="width: 5%;">#</th>
+                                    <th scope="col">UID</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Age</th>
+                                    <th scope="col">Phone</th>
+                                    <th scope="col">Gender</th>
+                                    <th scope="col">Today's</th>
+                                    <th scope="col">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allCandidatesBody"></tbody>
+                        </table>
+                        </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="event-points" role="tabpanel">
+                <h3 class="mb-3 pt-4">Award Points for an Event</h3>
+                <div class="alert-placeholder"></div>
+                <div class="card shadow-sm border-0"><div class="card-body">
+                <p class="card-subtitle mb-2 text-muted">Quickly add the same points to multiple candidates.</p>
+                <form id="eventPointsForm">
+                    <div class="mb-3">
+                        <label for="existingEventSelect" class="form-label">Or Select Existing Event</label>
+                        <select class="form-select" id="existingEventSelect">
+                            <option value="">-- Select an event to copy name --</option>
+                            </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventName" class="form-label">Event Name (Custom or from above)</label>
+                        <input type="text" class="form-control" id="eventName" placeholder="e.g., Treasure Hunt Participation" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventPoints" class="form-label">Points per Candidate</label>
+                        <input type="number" class="form-control" id="eventPoints" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventUids" class="form-label">Candidate UIDs</label>
+                        <textarea class="form-control" id="eventUids" rows="5"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-award me-2"></i>Award Points</button>
+                </form>
+                </div></div>
+            </div>
+
+            <div class="tab-pane fade" id="attendance" role="tabpanel">
+                <h3 class="mb-3 pt-4">Mark Attendance (100 Points)</h3>
+                <div class="alert-placeholder"></div>
+                <div class="card shadow-sm border-0"><div class="card-body">
+                <form id="attendanceForm"><div class="mb-3"><label for="attendanceEventDay" class="form-label">Event Day</label><select class="form-select" id="attendanceEventDay"><option value="1">Day 1</option><option value="2">Day 2</option><option value="3">Day 3</option><option value="4">Day 4</option><option value="5">Day 5</option></select></div><div class="mb-3"><label for="attendanceUids" class="form-label">Candidate UIDs</label><textarea class="form-control" id="attendanceUids" rows="5" required></textarea></div><button type="submit" class="btn btn-primary"><i class="bi bi-check-all me-2"></i>Mark Present</button></form>
+                </div></div>
+            </div>
+
+             <div class="tab-pane fade" id="event-search" role="tabpanel">
+                <h3 class="mb-3 pt-4">Search Events</h3>
+                <div class="alert-placeholder"></div>
+                <form id="eventSearchForm" class="d-flex mb-3">
+                     <input class="form-control me-2" type="search" id="eventSearchTerm" placeholder="Enter Event Name (Reason)">
+                     <button class="btn btn-success" type="submit"><i class="bi bi-search me-2"></i>Search Events</button>
+                </form>
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                         <h5>Matching Events</h5>
+                         <div class="card shadow-sm border-0">
+                            <div class="list-group list-group-flush" id="eventList" style="max-height: 400px; overflow-y: auto;">
+                                <div class="list-group-item text-muted">Search for events above.</div>
+                            </div>
+                         </div>
+                    </div>
+                     <div class="col-md-7">
+                         <h5>Participants</h5>
+                          <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h6 id="selectedEventName" class="card-title mb-3">Select an event from the list.</h6>
+                                <div class="table-responsive" style="max-height: 360px;">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr><th>UID</th><th>Name</th></tr>
+                                        </thead>
+                                        <tbody id="participantListBody">
+                                            <tr><td colspan="2" class="text-muted">No event selected.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                          </div>
+                     </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="paper-marking" role="tabpanel">
+                <h3 class="mb-3 pt-4">Paper Marking</h3>
+                <div class="alert-placeholder"></div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h5 class="card-title">Add Entry</h5>
+                                <p class="card-subtitle mb-2 text-muted">Data is not saved in the database.</p>
+                                <form id="paperMarkingForm">
+                                    <div class="mb-3">
+                                        <label for="markUid" class="form-label">Student UID</label>
+                                        <input type="number" class="form-control" id="markUid" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="markMarks" class="form-label">Marks</label>
+                                        <input type="number" class="form-control" id="markMarks" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>Add Entry</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h5 class="card-title">Marked Entries</h5>
+                                <div class="row g-2 mb-3 align-items-end">
+                                    <div class="col-sm-6">
+                                        <label for="filterMarkUid" class="form-label">Filter by UID</label>
+                                        <input type="text" class="form-control" id="filterMarkUid" placeholder="Type UID to filter...">
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <label for="filterMarkSort" class="form-label">Sort By</label>
+                                        <select id="filterMarkSort" class="form-select">
+                                            <option value="marks">Highest Marks</option>
+                                            <option value="uid">UID</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-2 d-grid">
+                                        <button class="btn btn-outline-success" id="exportMarksBtn" title="Export to Excel">
+                                            <i class="bi bi-file-earmark-excel-fill"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="table-responsive" style="max-height: 400px;">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>UID</th>
+                                                <th>Marks</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="paperMarkingBody">
+                                            <tr><td colspan="3" class="text-center text-muted">No entries yet.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> </main>
+
+    <footer class="fixed-bottom bg-white text-dark-50 p-3 text-center shadow-lg border-top">
+        &copy; 2025 Powered by Aarav Programmers <a href="https.www.linkedin.com/in/aaravshah1311" target="_blank" class="footer-link ms-2">
+            <i class="bi bi-linkedin"></i>
+        </a>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="script.js"></script>
+</body>
+</html>

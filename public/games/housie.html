@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Housie Board (Suggest & Select)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: grid;
+            grid-template-areas:
+                "header"
+                "controls"
+                "board"
+                "history";
+            gap: 20px;
+            padding: 20px;
+            background-color: #f4f7f6;
+            text-align: center;
+        }
+
+        h1 {
+            grid-area: header;
+            color: #333;
+        }
+
+        /* 1. The Control Panel */
+        .controls {
+            grid-area: controls;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        #draw-button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            width: 90%;
+        }
+
+        #draw-button:hover {
+            background-color: #0056b3;
+        }
+
+        #draw-button:disabled {
+            background-color: #c0c0c0;
+            cursor: not-allowed;
+        }
+
+        .current-number-display {
+            font-size: 1.5rem;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        #current-number {
+            font-size: 4.5rem;
+            font-weight: bold;
+            color: #d9534f;
+            margin-top: 10px;
+            line-height: 1;
+            min-height: 70px; /* Reserve space */
+        }
+        
+        #reset-button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            color: #fff;
+            background-color: #6c757d;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 10px;
+            width: 90%;
+        }
+
+        #reset-button:hover {
+            background-color: #5a6268;
+        }
+
+        /* 2. The Main Board (1-90) */
+        .board-container {
+            grid-area: board;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr); /* 10 columns wide */
+            gap: 5px;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .number-cell {
+            aspect-ratio: 1 / 1; /* Makes cells square */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* Add hover effect and pointer for clickable, un-called numbers */
+        .number-cell:not(.called) {
+            cursor: pointer;
+        }
+        
+        .number-cell:not(.called):hover {
+            background-color: #e0e0e0;
+        }
+
+        /* This is the "selected" state for a called number */
+        .number-cell.called {
+            background-color: #28a745;
+            color: white;
+            text-decoration: line-through;
+            transform: scale(1.05);
+            cursor: not-allowed;
+        }
+
+        /* 3. Called Numbers History */
+        .history-container {
+            grid-area: history;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        #called-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .called-num-item {
+            display: inline-block;
+            padding: 6px 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        /* Responsive layout */
+        @media (min-width: 800px) {
+            body {
+                grid-template-columns: 300px 1fr;
+                grid-template-areas:
+                    "header header"
+                    "controls board"
+                    "history board";
+                gap: 25px;
+                max-width: 1000px;
+                margin: 20px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Housie Board (Suggest & Select)</h1>
+
+    <div class="controls">
+        <button id="draw-button">Suggest Random Number</button>
+        <div class="current-number-display">
+            Suggested / Last Called:
+            <div id="current-number">-</div>
+        </div>
+        <button id="reset-button">Reset Game</button>
+    </div>
+
+    <div class="board-container" id="board">
+        </div>
+
+    <div class="history-container">
+        <h3>Called Numbers (In Order):</h3>
+        <div id="called-list">
+            </div>
+    </div>
+
+    <script>
+        // Get references to all the important HTML elements
+        const board = document.getElementById('board');
+        const drawButton = document.getElementById('draw-button');
+        const resetButton = document.getElementById('reset-button');
+        const currentNumberDisplay = document.getElementById('current-number');
+        const calledList = document.getElementById('called-list');
+
+        let availableNumbers = [];
+        let numberCells = {}; // To quickly access cell elements by number
+
+        // --- Core Function: Initialize the Game ---
+        function initializeGame() {
+            // 1. Clear board and lists
+            board.innerHTML = '';
+            calledList.innerHTML = '';
+            
+            // 2. Reset number tracking
+            availableNumbers = [];
+            numberCells = {};
+            
+            // 3. Reset displays and buttons
+            currentNumberDisplay.textContent = '-';
+            drawButton.disabled = false;
+            
+            // 4. Create the board and fill available numbers
+            for (let i = 1; i <= 90; i++) {
+                availableNumbers.push(i);
+
+                // Create a div for the number cell
+                let cell = document.createElement('div');
+                cell.classList.add('number-cell');
+                cell.id = 'num-' + i;
+                cell.textContent = i;
+                
+                // *** THIS IS THE "FINALIZE" ACTION ***
+                cell.addEventListener('click', () => handleManualSelect(i));
+                
+                board.appendChild(cell);
+                numberCells[i] = cell; // Store a reference
+            }
+        }
+
+        // --- Function for "Suggest" Button ---
+        function suggestRandomNumber() {
+            // Check if all numbers are drawn
+            if (availableNumbers.length === 0) {
+                currentNumberDisplay.textContent = 'Done!';
+                drawButton.disabled = true;
+                return;
+            }
+
+            // 1. Pick a random index from the available numbers
+            const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+            
+            // 2. Get the number at that index
+            const suggestedNumber = availableNumbers[randomIndex];
+            
+            // 3. ONLY display the suggested number
+            currentNumberDisplay.textContent = suggestedNumber;
+            
+            // This function does NOT remove the number from the list
+            // or mark it on the board. It only suggests it.
+        }
+        
+        // --- Function for Manual Cell Click (The "Finalize" action) ---
+        function handleManualSelect(number) {
+            // 1. Check if the number is still available
+            const numberIndex = availableNumbers.indexOf(number);
+            
+            // If it's not in the list (index is -1), it's already called. Do nothing.
+            if (numberIndex === -1) {
+                return;
+            }
+
+            // --- If the number IS available, finalize it: ---
+            
+            // 2. Remove the number from the available list
+            availableNumbers.splice(numberIndex, 1);
+            
+            // 3. Update the display to show this is the last called number
+            currentNumberDisplay.textContent = number;
+            
+            // 4. Mark the number on the main board
+            const cell = numberCells[number];
+            if (cell) {
+                cell.classList.add('called');
+            }
+            
+            // 5. Add the number to the history list
+            const historyItem = document.createElement('span');
+            historyItem.classList.add('called-num-item');
+            historyItem.textContent = number;
+            calledList.appendChild(historyItem);
+            
+            // 6. Check if the game is over
+            if (availableNumbers.length === 0) {
+                currentNumberDisplay.textContent = 'Done!';
+                drawButton.disabled = true; // Disable the suggest button
+            }
+        }
+
+        // --- Event Listeners ---
+        
+        // "Suggest" button
+        drawButton.addEventListener('click', suggestRandomNumber);
+
+        // "Reset" button
+        resetButton.addEventListener('click', initializeGame);
+
+        // --- Initial Setup ---
+        
+        // Set up the game for the first time when the page loads
+        initializeGame();
+        
+    </script>
+
+</body>
+</html>

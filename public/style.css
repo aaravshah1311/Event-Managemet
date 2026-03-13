@@ -1,0 +1,247 @@
+/* =========================================================
+   Global Theme & Variables
+========================================================= */
+:root {
+  --bs-primary: #5856d6;
+  --bs-light-gray: #f4f7fe;
+  --bs-dark: #1e1e2f;
+  --bs-text-muted: #6c757d;
+  --bs-card-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  --bs-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* =========================================================
+   Base Page Styling
+========================================================= */
+body {
+  background-color: var(--bs-light-gray);
+  padding-bottom: 56px;
+  font-family: var(--bs-font-family);
+  color: #222;
+  margin: 0;
+}
+
+/* =========================================================
+   Header / Navbar
+========================================================= */
+#main-header {
+  background-color: #fff;
+  border-bottom: 1px solid #e9ecef;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.04);
+}
+
+#main-header .container-fluid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-menu-btn {
+  background: transparent;
+  border: none;
+  height: 40px;
+  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--bs-primary);
+  transition: all 0.2s ease;
+}
+
+.header-menu-btn:hover {
+  background-color: rgba(88, 86, 214, 0.08);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #111;
+  font-weight: 600;
+  font-size: 1.05rem;
+  text-decoration: none;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 52px;
+}
+
+@media (max-width: 420px) {
+  .header-brand-text {
+    display: none;
+  }
+}
+
+/* =========================================================
+   Sidebar / Offcanvas
+========================================================= */
+#sidebar {
+  width: 280px;
+  background-color: #fff;
+  border-right: 1px solid #e9ecef;
+}
+
+#sidebar .navbar-brand {
+  font-weight: 600;
+}
+
+#sidebar .nav-link {
+  color: #555;
+  font-weight: 500;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.25rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+#sidebar .nav-link:hover {
+  color: #000;
+  background-color: #f3f4f7;
+}
+
+#sidebar .nav-link.active {
+  color: #fff !important;
+  background-color: var(--bs-primary) !important;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(88, 86, 214, 0.25);
+}
+
+#sidebar .nav-link i {
+  color: var(--bs-primary);
+  width: 1.5em;
+  text-align: center;
+}
+
+#sidebar .nav-link.active i {
+  color: #fff;
+}
+
+#sidebar a.text-success:hover {
+  background-color: #e6f7ec;
+}
+
+/* =========================================================
+   Cards & Dashboard Components
+========================================================= */
+.card {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: var(--bs-card-shadow);
+  margin-bottom: 1.5rem;
+  background-color: #fff;
+}
+
+.filter-card {
+  background-color: #fff;
+}
+
+.log-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Stat cards */
+.stat-card {
+  border-radius: 1rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+
+.stat-card .card-text {
+  font-weight: 700;
+}
+
+/* =========================================================
+   Chart.js Responsive Fix
+========================================================= */
+#pointsBarChart {
+  width: 100% !important;
+  max-width: 100%;
+  height: 320px !important;
+  display: block;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  #pointsBarChart {
+    height: 220px !important;
+  }
+}
+
+/* =========================================================
+   Activity Feed & Top Users
+========================================================= */
+#activity-feed .list-group-item,
+#top-users-list .list-group-item {
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid #f0f0f0 !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+}
+
+#activity-feed .list-group-item:last-child,
+#top-users-list .list-group-item:last-child {
+  border-bottom: none !important;
+}
+
+.activity-name, .user-name {
+  font-weight: 600;
+}
+
+.activity-reason, .user-uid {
+  color: var(--bs-text-muted);
+  font-size: 0.9rem;
+}
+
+.activity-points {
+  font-weight: 700;
+  color: #28a745;
+}
+
+.user-points {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--bs-primary);
+}
+
+/* =========================================================
+   Footer
+========================================================= */
+footer {
+  height: 56px;
+  padding: 0.6rem 0;
+  font-size: 0.9rem;
+  border-top: 1px solid #e9ecef;
+  background-color: #fff;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.04);
+}
+
+footer .footer-link {
+  color: var(--bs-text-muted);
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: color .15s;
+}
+
+footer .footer-link:hover {
+  color: var(--bs-primary);
+}
