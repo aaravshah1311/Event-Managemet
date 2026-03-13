@@ -51,7 +51,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const dbConfig = {
     host: 'localhost',
     user: 'root', // Your MySQL username
-    password: 'Aarav@1311', // Your MySQL password
+    password: '', // Your MySQL password
     database: 'event_manager',
     waitForConnections: true,
     connectionLimit: 15,
@@ -565,4 +565,5 @@ app.get('*', requireLogin, (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running! Access your app at http://localhost:${PORT}\n\n`);
     logger.info(`Server started on port ${PORT}`);
+
 });
